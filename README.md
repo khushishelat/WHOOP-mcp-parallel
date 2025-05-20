@@ -41,12 +41,20 @@ A Python API integration for accessing WHOOP fitness data. This tool provides a 
 
 Run the MCP server:
 ```
-uv --directory /path/to/whoop_mcp
+uv --directory /path/to/whoop_mcp run whoop_mcp.py
 ```
 
 Or if you're already in the whoop_mcp directory:
 ```
-uv --directory .
+uv --directory . run whoop_mcp.py
+```
+
+Example configuration in `~/.cursor/mcp.json`:
+```json
+"whoop": {
+  "command": "uv",
+  "args": ["--directory /path/to/whoop_mcp run whoop_mcp.py"]
+}
 ```
 
 ## Authentication
