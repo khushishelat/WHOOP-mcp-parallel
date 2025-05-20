@@ -19,6 +19,9 @@ load_dotenv()
 # Initialize FastMCP server
 mcp = FastMCP("whoop")
 
+# Path to store custom prompt
+CUSTOM_PROMPT_FILE = "whoop_custom_prompt.json"
+
 # Constants
 WHOOP_API_BASE = "https://api.prod.whoop.com/developer"
 WHOOP_AUTH_URL = "https://api.prod.whoop.com/oauth/oauth2/auth"
@@ -932,12 +935,54 @@ async def search_whoop_sports(query: str) -> str:
     result += "\nNote: These are community-identified sport IDs and may not be 100% accurate."
     return result
 
+def get_custom_prompt() -> Optional[str]:
+    """Get the current custom prompt if set."""
+    try:
+        with open(CUSTOM_PROMPT_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("prompt")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+def save_custom_prompt(prompt: Optional[str]) -> None:
+    """Save the custom prompt to a file."""
+    with open(CUSTOM_PROMPT_FILE, "w") as f:
+        json.dump({"prompt": prompt}, f)
+
+@mcp.tool()
+def set_custom_prompt(prompt: Optional[str] = None) -> str:
+    """Set or clear a custom prompt that will be appended to the start of every conversation.
+    
+    Args:
+        prompt: The custom prompt text to use, or None to clear the current prompt.
+    """
+    if prompt is None:
+        save_custom_prompt(None)
+        return "Custom prompt cleared successfully."
+    
+    save_custom_prompt(prompt)
+    return f"Custom prompt set successfully: '{prompt}'"
+
+@mcp.tool()
+def get_current_prompt() -> str:
+    """Get the current custom prompt if one is set."""
+    prompt = get_custom_prompt()
+    if prompt is None:
+        return "No custom prompt is currently set."
+    
+    return f"Current custom prompt: '{prompt}'"
+
 if __name__ == "__main__":
     # Initialize auth event
     auth_completed = threading.Event()
     
     # Start callback server for authentication
     start_callback_server()
+    
+    # Set system prompt with custom prompt if available
+    custom_prompt = get_custom_prompt()
+    if custom_prompt:
+        mcp.system_prompt = custom_prompt
     
     try:
         # Initialize and run the server
