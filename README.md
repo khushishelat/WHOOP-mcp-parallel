@@ -1,28 +1,57 @@
-# WHOOP MCP (My Claude Plugin)
+# WHOOP MCP
 
-This plugin allows you to interact with your WHOOP data through Claude. It supports accessing all data available through WHOOP's API, including sleep, recovery, workouts, and more.
+A Python API integration for accessing WHOOP fitness data. This tool provides a simple interface to interact with WHOOP's API for retrieving sleep, recovery, workouts, and more.
 
-## Setup
+## Table of Contents
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Authentication](#authentication)
+- [Available Tools](#available-tools)
+- [Features](#features)
+- [Example Usage](#example-usage)
+- [Technical Notes](#technical-notes)
+- [License](#license)
 
-1. Make sure you have the following Python packages installed:
+## Installation
+
+1. Ensure you have Python 3.13+ installed
+2. Clone this repository
+3. Install required dependencies:
    ```
-   pip install httpx mcp-python python-dotenv
+   pip install -r requirements.txt
+   ```
+   
+   Alternatively, using uv:
+   ```
+   uv pip install -e .
    ```
 
-2. Create a `.env` file in the root directory with your WHOOP client credentials:
+## Configuration
+
+1. Create a developer account at [WHOOP Developer Portal](https://developer.whoop.com/)
+2. Register a new application to get client credentials
+3. Create a `.env` file in the root directory with your WHOOP client credentials:
    ```
    WHOOP_CLIENT_ID=your_client_id
    WHOOP_CLIENT_SECRET=your_client_secret
    ```
 
-3. Run the MCP:
-   ```
-   python whoop_mcp.py
-   ```
+## Usage
+
+Run the MCP server:
+```
+uv --directory /path/to/whoop_mcp
+```
+
+Or if you're already in the whoop_mcp directory:
+```
+uv --directory .
+```
 
 ## Authentication
 
-Authentication with WHOOP is now fully automated:
+Authentication with WHOOP is fully automated:
 
 1. Use the `authenticate_with_whoop` tool to start the authentication flow
 2. Your browser will automatically open to the WHOOP authorization page
@@ -30,7 +59,7 @@ Authentication with WHOOP is now fully automated:
 4. The callback will be automatically handled, and your token will be saved for future use
 5. All API tools will automatically use your saved token
 
-You can check your authentication status with `check_authentication_status` tool.
+You can check your authentication status with the `check_authentication_status` tool.
 
 ## Available Tools
 
@@ -50,18 +79,20 @@ You can check your authentication status with `check_authentication_status` tool
 - `get_sports_mapping` - Get a mapping of sport IDs from your workout history
 - `search_whoop_sports` - Search for information about specific sports
 
-## Dynamic Sport Discovery
+## Features
 
-The latest version dynamically discovers sport information:
+### Dynamic Sport Discovery
+
+The application dynamically discovers sport information:
 
 - Sport IDs are automatically captured from your workout history
-- The plugin builds a mapping of known sport IDs as you use it
+- The app builds a mapping of known sport IDs as you use it
 - Use `get_sports_mapping` to see all sport IDs found in your workout history
 - Use `search_whoop_sports` to search for information about specific sports
 
-## Enhanced Display
+### Enhanced Display
 
-The latest version includes human-readable information instead of just IDs:
+Includes human-readable information instead of just IDs:
 
 - Sport names based on discovered sport IDs
 - Friendly dates and times
@@ -73,37 +104,37 @@ The latest version includes human-readable information instead of just IDs:
 
 1. Authenticate with WHOOP:
    ```
-   I need to connect to my WHOOP account
+   authenticate_with_whoop
    ```
 
 2. Get your recovery data:
    ```
-   What's my recovery score today?
+   get_recovery_data
    ```
 
 3. Get workout information:
    ```
-   Show me my latest workout
+   get_workout_data
    ```
 
 4. Get data for a specific date:
    ```
-   How was my sleep on 2023-05-15?
+   get_sleep_data --date 2023-05-15
    ```
 
 5. View your sport history:
    ```
-   What sport types have I done recently?
+   get_sports_mapping
    ```
 
 6. Search for a specific sport:
    ```
-   What's the sport ID for running?
+   search_whoop_sports --query running
    ```
 
-## Notes
+## Technical Notes
 
-- The MCP automatically starts a local server on port 8000 to handle OAuth callbacks
+- The app automatically starts a local server on port 8000 to handle OAuth callbacks
 - Your access token is saved to `whoop_token.json` for future use
 - You can specify dates for data retrieval (format: YYYY-MM-DD)
 - The WHOOP API has rate limits (100 requests per minute, 10,000 per day)
