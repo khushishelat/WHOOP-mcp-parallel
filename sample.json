@@ -1,0 +1,82 @@
+{
+    "additional_system_instructions": "<user-preferences>\n  The user has the following system preferences:\n  - Language: English\n  - Region: United States\n  - Timezone: America/New_York\n  - Current Date: 2025-07-18\n  - Unit Currency: $\n  - Unit Temperature: °F\n  - Unit Length: ft\n  - Unit Mass: lb\n  - Decimal Separator: .\n  - Grouping Separator: ,\n  Use the system preferences to format your answers accordingly.\n</user-preferences>\n\n",
+    "current_date": "2025-07-18T06:08:30Z",
+    "debug": false,
+    "locale": "en-US",
+    "messages": [
+        {
+            "author": "user",
+            "content": {
+                "text": "@whoop tell me about my day!"
+            }
+        },
+        {
+            "author": "assistant",
+            "content": {
+                "text": ""
+            },
+            "tool_calls": [
+                {
+                    "function": {
+                        "arguments": {},
+                        "name": "whoop-get_daily_summary"
+                    },
+                    "id": "call_ApRw1D4xZeqBueZ248GUFvnc",
+                    "type": "function"
+                }
+            ]
+        },
+        {
+            "author": "tool",
+            "content": {
+                "text": "[{\"text\":\"Could not fetch cycle data. Unable to generate summary.\",\"type\":\"text\"}]"
+            },
+            "name": "whoop-get_daily_summary",
+            "tool_call_id": "call_ApRw1D4xZeqBueZ248GUFvnc"
+        },
+        {
+            "author": "assistant",
+            "content": {
+                "text": "I was unable to fetch your cycle data to generate a summary for your day."
+            }
+        },
+        {
+            "author": "user",
+            "content": {
+                "text": "tell me about yesterday!"
+            }
+        },
+        {
+            "author": "assistant",
+            "content": {
+                "text": ""
+            },
+            "tool_calls": [
+                {
+                    "function": {
+                        "arguments": {
+                            "date": "2025-07-17"
+                        },
+                        "name": "whoop-get_daily_summary"
+                    },
+                    "id": "call_1QNCRQuPDknJtxCNTm9UAX7Z",
+                    "type": "function"
+                }
+            ]
+        },
+        {
+            "author": "tool",
+            "content": {
+                "text": "[{\"type\":\"text\",\"text\":\"Could not fetch cycle data. Unable to generate summary.\"}]"
+            },
+            "name": "whoop-get_daily_summary",
+            "tool_call_id": "call_1QNCRQuPDknJtxCNTm9UAX7Z"
+        },
+        {
+            "author": "assistant",
+            "content": {
+                "text": "I couldn't fetch the cycle data for yesterday to generate a summary."
+            }
+        }
+    ]
+}

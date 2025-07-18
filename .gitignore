@@ -5,7 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
-
+.pytest_cache/
 # Virtual environments
 .venv
 
@@ -13,5 +13,8 @@ wheels/
 .env
 
 # Tokens and credentials
+# WHOOP token files (both old and new locations)
 whoop_token.json
+.whoop_token.json
+.whoop_custom_prompt.json
 whoop_custom_prompt.json

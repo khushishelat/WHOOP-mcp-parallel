@@ -1,0 +1,23 @@
+# Core MCP dependencies
+mcp>=1.0.0
+fastmcp>=0.1.0
+
+# Web server dependencies
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+
+# HTTP client
+httpx>=0.25.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# Data handling
+pydantic>=2.5.0
+
+# Async support
+anyio>=4.0.0
+
+# Timezone handling
+pytz>=2023.3
