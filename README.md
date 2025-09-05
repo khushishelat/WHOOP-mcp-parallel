@@ -22,6 +22,7 @@ A comprehensive **Model Context Protocol (MCP) server** for accessing WHOOP fitn
 - **STDIO** - Local development with Claude Desktop
 - **WebSocket** - Real-time cloud communication
 - **HTTP REST API** - Automation and integration
+- **HTTP MCP** - Parallel Task API compatible transport
 - **SSE** - Server-sent events for live monitoring
 
 ### 🔒 **Enterprise Security**
@@ -67,7 +68,8 @@ WHOOP-mcp/
 │
 └── 🧪 tests/               # Test files
     ├── 🧪 test_deployment.py # Deployment tests
-    └── 🔒 test_security.py   # Security tests
+    ├── 🔒 test_security.py   # Security tests
+    └── 🔄 test_parallel_integration.py # Parallel API tests
 ```
 
 ## 🚀 Quick Start
@@ -109,6 +111,7 @@ flyctl secrets set WHOOP_CLIENT_SECRET=your_client_secret
 - **[📖 STDIO Guide](docs/stdio-guide.md)** - Local development with Claude Desktop
 - **[🌐 WebSocket Guide](docs/websocket-guide.md)** - Real-time cloud connections
 - **[🔧 HTTP Guide](docs/http-guide.md)** - REST API automation
+- **[🔄 Parallel API Guide](docs/parallel-api-guide.md)** - AI-powered analysis with Parallel
 - **[📡 SSE Guide](docs/sse-guide.md)** - Server-sent events streaming
 
 ### Deployment & Security
@@ -202,6 +205,12 @@ Add to your `~/.claude/mcp.json`:
 ## 🧪 Testing
 
 ```bash
+# Setup for Parallel API (gets API key & completes OAuth)
+./setup_parallel_auth.sh
+
+# Test Parallel API integration
+python tests/test_parallel_integration.py
+
 # Test security features
 python tests/test_security.py
 
@@ -266,6 +275,7 @@ Your WHOOP MCP server is deployed and accessible at:
 ### Protected Endpoints (require API key)
 - **Available Tools:** `https://whoop-mcp.fly.dev/tools`
 - **Auth Status:** `https://whoop-mcp.fly.dev/auth`  
+- **HTTP MCP:** `https://whoop-mcp.fly.dev/mcp` (POST - Parallel API compatible)
 - **WebSocket MCP:** `wss://whoop-mcp.fly.dev/mcp`
 
 ## 🤝 Contributing

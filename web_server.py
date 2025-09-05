@@ -100,8 +100,17 @@ async def security_middleware(request: Request, call_next):
     start_time = time.time()
     client_ip = get_client_ip(request)
     
-    # Log request
+    # Log request with enhanced details
+    user_agent = request.headers.get("user-agent", "unknown")
     logger.info(f"🌐 {request.method} {request.url.path} from {client_ip}")
+    logger.info(f"🔍 USER-AGENT: {user_agent}")
+    
+    # Flag potential Parallel AI requests
+    if "parallel" in user_agent.lower() or "python" in user_agent.lower():
+        logger.info(f"🤖 POTENTIAL PARALLEL AI REQUEST detected!")
+    
+    if request.method == "POST":
+        logger.info(f"🔍 REQUEST HEADERS: {dict(request.headers)}")
     
     # Rate limiting
     if is_rate_limited(client_ip):
@@ -167,7 +176,8 @@ async def root():
         },
         "endpoints": {
             "health": "/health (public)",
-            "mcp_ws": "/mcp (protected - requires X-API-Key)",
+            "mcp_http": "/mcp (POST) (protected - requires X-API-Key) - HTTP transport for Parallel API",
+            "mcp_ws": "/mcp (WebSocket) (protected - requires X-API-Key) - WebSocket transport", 
             "tools": "/tools (protected - requires X-API-Key)",
             "auth": "/auth (protected - requires X-API-Key)"
         },
@@ -182,11 +192,14 @@ async def root():
             "🎯 Training readiness scoring",
             "📊 Body composition tracking",
             "🇺🇸 US units & EST timezone formatting",
-            "📅 Comprehensive daily summaries"
+            "📅 Comprehensive daily summaries",
+            "🌐 HTTP transport (Parallel API compatible)",
+            "🔌 WebSocket transport (real-time)"
         ],
         "usage": {
             "authentication": "Include 'X-API-Key: your-api-key' header for protected endpoints",
-            "websocket": "Connect to /mcp with X-API-Key header for MCP communication"
+            "http_mcp": "POST to /mcp with X-API-Key header for HTTP MCP communication (Parallel API compatible)",
+            "websocket_mcp": "Connect to /mcp (WebSocket) with X-API-Key header for real-time MCP communication"
         }
     }
 
@@ -378,6 +391,278 @@ async def whoop_oauth_callback(request: Request):
                 "message": "An error occurred while processing the authentication"
             }
         )
+
+# HTTP endpoint for MCP communication (Parallel API compatible)
+@app.post("/mcp")
+async def mcp_http(request: Request):
+    # CRITICAL: Log every single MCP request attempt
+    logger.critical(f"🚨 MCP ENDPOINT HIT from {request.client.host}")
+    """HTTP endpoint for MCP communication (compatible with Parallel Task API)"""
+    
+    client_ip = get_client_ip(request)
+    
+    try:
+        # Get request body
+        body = await request.body()
+        data = body.decode('utf-8')
+        
+        # Parse JSON-RPC message with validation
+        if len(data) > 10000:  # Limit message size
+            raise ValueError("Message too large")
+        
+        message = json.loads(data)
+        
+        # Validate message structure
+        if not isinstance(message, dict):
+            raise ValueError("Invalid message format")
+        
+        # Sanitize input
+        method = str(message.get("method", "")).strip()[:100]  # Limit method name length
+        message_id = message.get("id")
+        
+        # Enhanced MCP request logging
+        user_agent = request.headers.get("user-agent", "unknown")
+        logger.critical(f"📥 MCP REQUEST: {method} from {client_ip}")
+        logger.critical(f"📥 MCP USER-AGENT: {user_agent}")
+        logger.critical(f"📥 MCP FULL MESSAGE: {message}")
+        
+        # Detect source of request
+        if "parallel" in user_agent.lower() or "httpx" in user_agent.lower():
+            logger.critical(f"🤖 CONFIRMED PARALLEL AI MCP REQUEST: {method}")
+        else:
+            logger.critical(f"👤 MANUAL/CURL MCP REQUEST: {method}")
+        
+        # Handle different message types
+        if message.get("method") == "initialize":
+            # MCP initialization
+            response = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {},
+                        "prompts": {},
+                        "resources": {}
+                    },
+                    "serverInfo": {
+                        "name": "whoop-mcp",
+                        "version": "2.0.0"
+                    }
+                }
+            }
+            return JSONResponse(content=response)
+        
+        elif message.get("method") == "tools/list":
+            # List available tools
+            logger.critical(f"🔧 TOOLS/LIST REQUEST from {client_ip} - user_agent: {user_agent}")
+            try:
+                tools = []
+                if hasattr(whoop_mcp, 'mcp') and hasattr(whoop_mcp.mcp, '_tools'):
+                    for tool_name, tool_info in whoop_mcp.mcp._tools.items():
+                        tool_schema = {
+                            "name": tool_name,
+                            "description": tool_info.get("description", "No description available"),
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {},
+                                "required": []
+                            }
+                        }
+                        tools.append(tool_schema)
+                elif hasattr(whoop_mcp, 'mcp') and hasattr(whoop_mcp.mcp, 'tools'):
+                    for tool_name, tool_info in whoop_mcp.mcp.tools.items():
+                        tool_schema = {
+                            "name": tool_name,
+                            "description": tool_info.get("description", "No description available"),
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {},
+                                "required": []
+                            }
+                        }
+                        tools.append(tool_schema)
+                else:
+                    # Fallback: List the known tools manually with proper descriptions
+                    known_tools = {
+                        "get_sleep_data": "Get the user's personal sleep data from WHOOP, including sleep quality, duration, efficiency, and stages",
+                        "get_recovery_data": "Get the user's personal recovery data from WHOOP, including recovery score and strain",
+                        "get_workout_data": "Get the user's personal workout and activity data from WHOOP",
+                        "get_cycle_data": "Get the user's personal physiological cycle data from WHOOP",
+                        "get_profile_data": "Get the user's personal profile information from WHOOP",
+                        "get_body_measurement_data": "Get the user's personal body measurement data from WHOOP",
+                        "get_sports_mapping": "Get WHOOP sports mapping data for workout types",
+                        "get_workout_analysis": "Analyze the user's workout data and provide insights",
+                        "get_sleep_quality_analysis": "Analyze the user's sleep quality and provide personalized insights",
+                        "get_recovery_load_analysis": "Analyze the user's recovery and training load data",
+                        "get_training_readiness": "Get the user's training readiness score and recommendations",
+                        "search_whoop_sports": "Search for WHOOP sport types and activities",
+                        "set_custom_prompt": "Set a custom prompt for WHOOP data analysis",
+                        "get_custom_prompt": "Get the current custom prompt for WHOOP data analysis",
+                        "clear_custom_prompt": "Clear the custom prompt for WHOOP data analysis",
+                        "get_daily_summary": "Get a comprehensive daily summary of the user's WHOOP data including sleep, recovery, and activity"
+                    }
+                    for tool_name, description in known_tools.items():
+                        tool_schema = {
+                            "name": tool_name,
+                            "description": description,
+                            "inputSchema": {
+                                "type": "object",
+                                "properties": {},
+                                "required": []
+                            }
+                        }
+                        tools.append(tool_schema)
+                
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": message.get("id"),
+                    "result": {"tools": tools}
+                }
+                logger.critical(f"🔧 TOOLS/LIST SUCCESS: Returning {len(tools)} tools")
+                return JSONResponse(content=response)
+            except Exception as e:
+                logger.critical(f"🚨 TOOLS/LIST ERROR: {e}")
+                error_response = {
+                    "jsonrpc": "2.0",
+                    "id": message.get("id"),
+                    "error": {
+                        "code": -32603,
+                        "message": f"Failed to list tools: {str(e)}"
+                    }
+                }
+                return JSONResponse(content=error_response, status_code=500)
+        
+        elif message.get("method") == "tools/call":
+            # Call a tool
+            params = message.get("params", {})
+            tool_name = params.get("name")
+            arguments = params.get("arguments", {})
+            
+            # 🔍 DETAILED LOGGING for debugging
+            logger.info(f"🔧 TOOL CALL DEBUG - Tool: {tool_name}")
+            logger.info(f"🔧 TOOL CALL DEBUG - Arguments: {arguments}")
+            logger.info(f"🔧 TOOL CALL DEBUG - Full params: {params}")
+            
+            # Valid WHOOP MCP tools that can provide real user data
+            valid_tools = [
+                "get_sleep_data", "get_recovery_data", "get_workout_data", "get_cycle_data",
+                "get_profile_data", "get_body_measurement_data", "get_sports_mapping",
+                "get_workout_analysis", "get_sleep_quality_analysis", "get_recovery_load_analysis",
+                "get_training_readiness", "search_whoop_sports", "set_custom_prompt",
+                "get_custom_prompt", "clear_custom_prompt", "get_daily_summary"
+            ]
+            
+            if tool_name in valid_tools:
+                try:
+                    # Call the tool using proper FastMCP method
+                    logger.info(f"🔧 TOOL CALL DEBUG - Calling FastMCP with tool: {tool_name}")
+                    result = await whoop_mcp.call_tool(tool_name, arguments)
+                    logger.info(f"🔧 TOOL CALL DEBUG - Raw result type: {type(result)}")
+                    logger.info(f"🔧 TOOL CALL DEBUG - Raw result (first 200 chars): {str(result)[:200]}...")
+                    
+                    # Extract clean text from FastMCP response
+                    clean_text = str(result)
+                    if hasattr(result, '__iter__') and len(result) > 0:
+                        # If it's a tuple/list with TextContent objects, extract the text
+                        if hasattr(result[0], '__iter__'):
+                            for item in result[0]:
+                                if hasattr(item, 'text'):
+                                    clean_text = item.text
+                                    break
+                        # If result has a 'result' key in a dict, use that
+                        elif len(result) > 1 and isinstance(result[1], dict) and 'result' in result[1]:
+                            clean_text = result[1]['result']
+                    
+                    logger.info(f"🔧 TOOL CALL DEBUG - Extracted clean text (first 200 chars): {clean_text[:200]}...")
+                    
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": message.get("id"),
+                        "result": {
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": clean_text
+                                }
+                            ]
+                        }
+                    }
+                    logger.info(f"🔧 TOOL CALL DEBUG - Response format: {type(response)}")
+                    logger.info(f"🔧 TOOL CALL DEBUG - Response content preview: {str(response)[:300]}...")
+                except Exception as e:
+                    # Log detailed error for debugging but don't expose to client
+                    logger.error(f"🔧 TOOL CALL DEBUG - Tool execution error for {tool_name}: {e}")
+                    logger.error(f"🔧 TOOL CALL DEBUG - Exception type: {type(e)}")
+                    response = {
+                        "jsonrpc": "2.0",
+                        "id": message.get("id"),
+                        "error": {
+                            "code": -32603,
+                            "message": "Tool execution failed. Please check your authentication and try again."
+                        }
+                    }
+            else:
+                logger.warning(f"🔧 TOOL CALL DEBUG - Tool not found: {tool_name}")
+                logger.warning(f"🔧 TOOL CALL DEBUG - Valid tools: {valid_tools}")
+                response = {
+                    "jsonrpc": "2.0",
+                    "id": message.get("id"),
+                    "error": {
+                        "code": -32601,
+                        "message": f"Tool not found: {tool_name}"
+                    }
+                }
+            
+            return JSONResponse(content=response)
+        
+        else:
+            # Unknown method
+            response = {
+                "jsonrpc": "2.0",
+                "id": message.get("id"),
+                "error": {
+                    "code": -32601,
+                    "message": f"Method not found: {message.get('method')}"
+                }
+            }
+            return JSONResponse(content=response)
+            
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decode error from {client_ip}: {e}")
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": None,
+            "error": {
+                "code": -32700,
+                "message": "Invalid JSON format"
+            }
+        }
+        return JSONResponse(content=error_response, status_code=400)
+    
+    except ValueError as e:
+        logger.error(f"Validation error from {client_ip}: {e}")
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": message_id if 'message_id' in locals() else None,
+            "error": {
+                "code": -32602,
+                "message": "Invalid request format"
+            }
+        }
+        return JSONResponse(content=error_response, status_code=400)
+    
+    except Exception as e:
+        logger.error(f"Unexpected error from {client_ip}: {e}")
+        error_response = {
+            "jsonrpc": "2.0",
+            "id": message_id if 'message_id' in locals() else None,
+            "error": {
+                "code": -32603,
+                "message": "Internal server error"
+            }
+        }
+        return JSONResponse(content=error_response, status_code=500)
 
 # WebSocket endpoint for MCP communication
 @app.websocket("/mcp")
