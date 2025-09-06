@@ -102,25 +102,26 @@ def create_event_panel(event_type, message, timestamp):
 
 def create_prompt():
     """Create the athlete benchmarking and adaptation prompt"""
-    return """I need you to conduct EXTENSIVE research across both my WHOOP data and the web to solve a specific fitness puzzle: 
+    return """Your PRIMARY TASK is to conduct EXTENSIVE WEB RESEARCH to solve this fitness puzzle. Use my WHOOP data efficiently as context, but focus your time and effort on comprehensive internet research.
 
 **MY PROFILE:**
-- Demographics: 23-year-old female, 5'2", Indian immigrant living in the US
-- Training routine: 3x/week strength training (full-body, lower focus) + 2x 5-mile runs/week + 1x yoga/week + HIIT circuits after lifts
-- WHOOP data: includes HRV, RHR, strain, recovery, and sleep metrics
-
+- Demographics: [Include yours]
+- Training routine: [Include yours]
 **THE PUZZLE:**
-I've been really curious about what it means to "train like an athlete." Specifically: how far away am I from the physiological profiles of different athlete groups, and what changes would most effectively move my metrics in that direction?
+How far am I from the physiological profiles of different athlete groups, and what changes would most effectively move my metrics in that direction?
 
-**RESEARCH REQUIREMENTS:**
-Search extensively across:
-- Published biometric norms (2020-2025) for female athletes in different categories (endurance, strength/power, team sport, recreationally trained)
-- Studies comparing trained vs untrained women by HRV, RHR, recovery, VO2, sleep
-- Research on training adaptations and interventions that shift these metrics
-- Evidence-based protocols athletes use to close gaps in HRV, RHR, or recovery (you may find this on Youtube, podcasts, interviews, scientific papers, etc.)
-- Demographic factors that might affect adaptation patterns
+**STEP 1 - QUICK DATA SNAPSHOT:**
+Call 2-3 WHOOP MCP tools efficiently to get: recent HRV, RHR, recovery scores, sleep duration. Summarize these in 2-3 sentences.
 
-**CRITICAL:** Use my actual WHOOP data throughout with MCP tool calls. Reference specific studies (2020-2025), include direct URLs to research papers, training protocols, and practical resources, and include a clear summary of my wHOOP data in relation to your web research."""
+**STEP 2 - EXTENSIVE WEB RESEARCH:**
+Research extensively across:
+- Published biometric norms (2020-2025) for female athletes: endurance, strength/power, team sport, recreational
+- Studies comparing trained vs untrained women by HRV, RHR, recovery, VO2, sleep  
+- Training interventions that improve these metrics (protocols, timelines, effect sizes)
+- Evidence-based strategies athletes use (research papers, expert content, protocols, fitness youtube, podcasts, etc.)
+- Demographic factors affecting adaptation
+
+**OUTPUT PRIORITY:** Include direct URLs, specific studies (2020-2025), and actionable protocols."""
 
 def create_task_spec():
     """Create a custom JSON schema for athlete benchmarking & adaptation analysis"""
@@ -130,32 +131,30 @@ def create_task_spec():
             "json_schema": {
                 "type": "object",
                 "description": "Comprehensive benchmarking of WHOOP fitness data against athlete cohorts with research-backed interventions",
-                "properties": {
+                "properties": { 
+                    # Overall response
+                    "overall_answer": {"type": "string","description": "1-3 Paragraph response summarizing information from WHOOP data and web research to answer the user's questions (how far away am I from the physiological profiles of different athlete groups, and what changes would most effectively move my metrics in that direction?)"},
+
                     # Comprehensive WHOOP data summary
-                    "whoop_data_summary": {"type": "string", "description": "Comprehensive 30-day snapshot of WHOOP data including: average RHR (bpm), HRV (ms), daily strain, sleep duration, restorative sleep (deep + REM), recovery scores, workout frequency, and VO2 max if available. Present as clear, organized summary with key trends and patterns."},
+                    "whoop_data_summary": {"type": "string", "description": "Brief summary of key WHOOP metrics (HRV, RHR, recovery, sleep) from 2-3 efficient MCP tool calls. Keep concise - 2-3 sentences maximum. This provides context for comparisons but should not be the focus."},
                     
                     # Benchmarking research
                     "athlete_norms_endurance": {"type": "string","description": "Published ranges (2020-2025) for female endurance athletes: HRV, RHR, recovery, VO2 max, sleep metrics. Include specific studies and sample sizes."},
                     "athlete_norms_strength": {"type": "string","description": "Published ranges (2020-2025) for female strength/power athletes: HRV, RHR, recovery, VO2 max, sleep metrics. Include specific studies and sample sizes."},
                     "athlete_norms_team_sport": {"type": "string","description": "Published ranges (2020-2025) for female team sport athletes: HRV, RHR, recovery, VO2 max, sleep metrics. Include specific studies and sample sizes."},
-                    "cohort_comparison_summary": {"type": "string","description": "Detailed comparison showing percent similarity of user's metrics to each athlete cohort. Highlight closest matches and identify the largest performance gaps with specific numbers."},
+                    "cohort_comparison_summary": {"type": "string","description": "Research-based comparison showing how user's metrics compare to published athlete norms. Focus on web research findings with specific percentiles, gaps, and references to studies."},
                     
                     # Consolidated training interventions
-                    "training_interventions": {"type": "string","description": "Research-backed training and recovery interventions (2020-2025) to improve HRV, reduce RHR, and enhance recovery. Include specific protocols, expected timelines, effect sizes, and implementation strategies from peer-reviewed studies."},
+                    "training_interventions": {"type": "string","description": "Extensive web research on training interventions (2020-2025) with specific protocols, timelines, and effect sizes. Include direct URLs to studies, expert recommendations, and evidence-based strategies. This should be your most comprehensive section."},
                     
                     # Core analysis & recommendations
-                    "top_3_cohort_matches": {"type": "string","description": "Ranked list of athlete cohorts user most closely resembles, with a quantiative and qualitative analysis of comparisons. Include references to training methods and documented regimens."},
-                    "biggest_gaps": {"type": "string","description": "Top 3 largest performance gaps between user's metrics and target athlete cohorts, with specific numbers and citations from research literature."},
-                    "evidence_based_action_plan": {"type": "string","description": "5 prioritized, research-backed recommendations with clear implementation steps, expected timelines for results, and links to supporting studies or resources."},
-                    "forecast_timeline": {"type": "string","description": "Realistic timelines for closing specific performance gaps based on intervention studies, including milestones and expected progression rates."},
-                    "red_flags": {"type": "string","description": "Warning signs or conditions where pursuing elite athlete metrics could be risky or require medical oversight. Include specific thresholds and contraindications."}
+                    "top_3_cohort_matches": {"type": "string","description": "Ranked list of athlete cohorts user most closely resembles, with a quantiative and qualitative analysis of comparisons. Include references to training methods and documented regimens."}
                 },
                 "required": [
-                    "whoop_data_summary",
-                    "athlete_norms_endurance","athlete_norms_strength","athlete_norms_team_sport","cohort_comparison_summary",
-                    "training_interventions",
-                    "top_3_cohort_matches","biggest_gaps","evidence_based_action_plan","forecast_timeline","red_flags"
-                ],
+                    "overall_answer",
+                    "athlete_norms_endurance","athlete_norms_strength","athlete_norms_team_sport",
+                    "training_interventions","top_3_cohort_matches","cohort_comparison_summary",
+                    "whoop_data_summary"],
                 "additionalProperties": False
             }
         }
@@ -174,7 +173,7 @@ def make_parallel_request(ngrok_url):
     
     data = {
         "input": create_prompt(),
-        "processor": "proe ",
+        "processor": "pro",
         "enable_events": True,
         "task_spec": create_task_spec(),  # Add custom schema
         "mcp_servers": [
@@ -399,7 +398,7 @@ def display_structured_output(task_result):
             # Sort fields to show most important ones first
             priority_fields = [
                 "whoop_data_summary", "cohort_comparison_summary", 
-                "evidence_based_action_plan", "biggest_gaps"
+                "overall_answer"
             ]
             
             # Show priority fields first

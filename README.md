@@ -44,7 +44,7 @@ export WHOOP_CLIENT_SECRET="your_whoop_client_secret"
 
 ### 3. Set Up Parallel AI API Key
 
-Get your API key from [Parallel AI](https://parallel.ai):
+Get your API key from [Parallel AI](https://platform.parallel.ai):
 
 ```bash
 export PARALLEL_API_KEY="your_parallel_api_key"
@@ -64,9 +64,13 @@ INFO: Uvicorn running on http://0.0.0.0:8080
 
 ### 5. Expose Server with ngrok
 
-In a new terminal:
+In a new terminal, first kill any existing ngrok processes, then start ngrok:
 
 ```bash
+# Kill any existing ngrok processes
+pkill -f ngrok
+
+# Start ngrok
 ngrok http 8080
 ```
 
