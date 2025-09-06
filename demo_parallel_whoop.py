@@ -105,8 +105,8 @@ def create_prompt():
     return """I need you to conduct EXTENSIVE research across both my WHOOP data and the web to solve a specific fitness puzzle: 
 
 **MY PROFILE:**
-- Demographics: [Include your Demographics]
-- Training routine: [Summarize your excercise routine; WHOOP does not have strength training data available via MCP]
+- Demographics: 23-year-old female, 5'2", Indian immigrant living in the US
+- Training routine: 3x/week strength training (full-body, lower focus) + 2x 5-mile runs/week + 1x yoga/week + HIIT circuits after lifts
 - WHOOP data: includes HRV, RHR, strain, recovery, and sleep metrics
 
 **THE PUZZLE:**
@@ -114,8 +114,8 @@ I've been really curious about what it means to "train like an athlete." Specifi
 
 **RESEARCH REQUIREMENTS:**
 Search extensively across:
-- Published biometric norms (2020-2025) for athletes in different categories (endurance, strength/power, team sport, recreationally trained)
-- Studies comparing trained vs untrained people with my demographic by HRV, RHR, recovery, VO2, sleep
+- Published biometric norms (2020-2025) for female athletes in different categories (endurance, strength/power, team sport, recreationally trained)
+- Studies comparing trained vs untrained women by HRV, RHR, recovery, VO2, sleep
 - Research on training adaptations and interventions that shift these metrics
 - Evidence-based protocols athletes use to close gaps in HRV, RHR, or recovery (you may find this on Youtube, podcasts, interviews, scientific papers, etc.)
 - Demographic factors that might affect adaptation patterns
@@ -174,7 +174,7 @@ def make_parallel_request(ngrok_url):
     
     data = {
         "input": create_prompt(),
-        "processor": "pro",
+        "processor": "proe ",
         "enable_events": True,
         "task_spec": create_task_spec(),  # Add custom schema
         "mcp_servers": [
@@ -266,21 +266,54 @@ def display_structured_output(task_result):
         # Show MCP tool calls if available
         mcp_tool_calls = output.get("mcp_tool_calls", [])
         if mcp_tool_calls:
-            console.print("[bold magenta]MCP TOOL CALLS[/bold magenta]\n")
+            console.print("[bold magenta]🔧 MCP TOOLS USED[/bold magenta]\n")
             
-            for i, tool_call in enumerate(mcp_tool_calls[:3]):  # Show first 3
-                console.print(f"[bold magenta]{i+1}. Tool:[/bold magenta] {tool_call.get('tool_name', 'Unknown')}")
-                console.print(f"[dim]   Server:[/dim] {tool_call.get('server_name', 'Unknown')}")
+            # Group successful tools by name to show unique tools and their usage count
+            tool_usage = {}
+            successful_calls = 0
+            
+            for tool_call in mcp_tool_calls:
+                # Skip failed calls - only show successful ones
+                if tool_call.get('error'):
+                    continue
+                    
+                successful_calls += 1
+                tool_name = tool_call.get('tool_name', 'Unknown')
+                server_name = tool_call.get('server_name', 'Unknown')
                 
-                if tool_call.get('content'):
-                    content_preview = tool_call['content'][:100] + "..." if len(tool_call['content']) > 100 else tool_call['content']
-                    console.print(f"[dim]   Result:[/dim] {content_preview}")
-                elif tool_call.get('error'):
-                    console.print(f"[red]   Error:[/red] {tool_call['error']}")
-                console.print()
+                if tool_name not in tool_usage:
+                    tool_usage[tool_name] = {'count': 0, 'server': server_name}
+                tool_usage[tool_name]['count'] += 1
             
-            if len(mcp_tool_calls) > 3:
-                console.print(f"[dim]...and {len(mcp_tool_calls) - 3} more tool calls![/dim]\n")
+            # Only display if we have successful calls
+            if tool_usage:
+                # Display tool usage summary
+                tools_table = Table.grid(padding=1)
+                tools_table.add_column("Tool", style="bold magenta", min_width=20)
+                tools_table.add_column("Server", style="dim cyan", min_width=15)
+                tools_table.add_column("Usage", style="green", min_width=10)
+                
+                for tool_name, usage_info in tool_usage.items():
+                    count = usage_info['count']
+                    server = usage_info['server']
+                    
+                    # Format usage count
+                    if count == 1:
+                        usage_text = "1 call"
+                    else:
+                        usage_text = f"{count} calls"
+                    
+                    tools_table.add_row(tool_name, server, f"✓ {usage_text}")
+                
+                # Create panel for tool summary
+                tools_panel = Panel(
+                    tools_table,
+                    title=f"[magenta]MCP Tools Used ({successful_calls} successful calls)[/magenta]",
+                    border_style="magenta",
+                    padding=(1, 1)
+                )
+                console.print(tools_panel)
+                console.print()
         
         # Handle the main content display
         if isinstance(content_obj, dict):
@@ -314,13 +347,23 @@ def display_structured_output(task_result):
                 else:
                     return "white"
             
-            # Helper function to preview field content
-            def get_field_preview(value, max_length=300):
+            # Helper function to preview field content with responsive width
+            def get_field_preview(value, base_max_length=300):
+                # Make max_length responsive to console width
+                console_width = console.size.width
+                if console_width < 80:
+                    max_length = base_max_length // 2  # Shorter for narrow screens
+                elif console_width < 120:
+                    max_length = base_max_length
+                else:
+                    max_length = int(base_max_length * 1.5)  # Longer for wide screens
+                
                 if isinstance(value, str):
                     if len(value) <= max_length:
                         return value
                     else:
-                        return value[:max_length] + "..."
+                        remaining_chars = len(value) - max_length
+                        return value[:max_length] + f"... and {remaining_chars:,} more characters"
                 elif isinstance(value, (int, float)):
                     return str(value)
                 elif isinstance(value, dict):
@@ -328,7 +371,11 @@ def display_structured_output(task_result):
                     formatted = ""
                     for k, v in value.items():
                         formatted += f"• {k.replace('_', ' ').title()}: {v}\n"
-                    return formatted.strip()[:max_length] + ("..." if len(formatted) > max_length else "")
+                    if len(formatted) <= max_length:
+                        return formatted.strip()
+                    else:
+                        remaining_chars = len(formatted) - max_length
+                        return formatted.strip()[:max_length] + f"... and {remaining_chars:,} more characters"
                 elif isinstance(value, list):
                     # Show first few items
                     items_preview = []
@@ -342,7 +389,12 @@ def display_structured_output(task_result):
                         result += f"\n... and {len(value) - 3} more items"
                     return result
                 else:
-                    return str(value)[:max_length] + ("..." if len(str(value)) > max_length else "")
+                    full_str = str(value)
+                    if len(full_str) <= max_length:
+                        return full_str
+                    else:
+                        remaining_chars = len(full_str) - max_length
+                        return full_str[:max_length] + f"... and {remaining_chars:,} more characters"
             
             # Sort fields to show most important ones first
             priority_fields = [
