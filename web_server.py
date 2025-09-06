@@ -33,7 +33,7 @@ API_SECRET_KEY = os.getenv("API_SECRET_KEY")
 if not API_SECRET_KEY:
     # Generate a secure random key if not provided (for development)
     API_SECRET_KEY = secrets.token_urlsafe(32)
-    logger.warning("⚠️  API_SECRET_KEY not set! Using temporary key. Set API_SECRET_KEY environment variable for production.")
+    logger.warning("API_SECRET_KEY not set! Using temporary key. Set API_SECRET_KEY environment variable for production.")
     logger.info(f"🔑 Temporary API Key: {API_SECRET_KEY}")
 
 # Rate limiting storage
@@ -227,11 +227,13 @@ async def get_tools():
         else:
             # Fallback: List the known tools manually
             known_tools = [
-                "get_sleep_data", "get_recovery_data", "get_workout_data", "get_cycle_data",
+                "get_sleep_daily", "get_recovery_daily", "get_workout_daily", "get_cycle_daily",
                 "get_profile_data", "get_body_measurement_data", "get_sports_mapping",
                 "get_workout_analysis", "get_sleep_quality_analysis", "get_recovery_load_analysis",
                 "get_training_readiness", "search_whoop_sports", "set_custom_prompt",
-                "get_custom_prompt", "clear_custom_prompt", "get_daily_summary"
+                "get_current_prompt", "get_daily_summary", "get_workout_trends",
+                "get_recovery_trends", "get_strain_trends", "get_sleep_trends",
+                "get_recovery_chart", "get_tools_guide", "authenticate_with_whoop", "check_authentication_status"
             ]
             for tool_name in known_tools:
                 tools.append({
@@ -485,22 +487,28 @@ async def mcp_http(request: Request):
                 else:
                     # Fallback: List the known tools manually with proper descriptions
                     known_tools = {
-                        "get_sleep_data": "Get the user's personal sleep data from WHOOP, including sleep quality, duration, efficiency, and stages",
-                        "get_recovery_data": "Get the user's personal recovery data from WHOOP, including recovery score and strain",
-                        "get_workout_data": "Get the user's personal workout and activity data from WHOOP",
-                        "get_cycle_data": "Get the user's personal physiological cycle data from WHOOP",
+                        "get_sleep_daily": "Get detailed sleep data for a single night including quality, duration, efficiency, and stages",
+                        "get_recovery_daily": "Get detailed recovery metrics for a single day including recovery score, HRV, and RHR",
+                        "get_workout_daily": "Get detailed data for a single workout including strain, heart rate, and performance metrics",
+                        "get_cycle_daily": "Get daily strain and physiological cycle data for a single day",
                         "get_profile_data": "Get the user's personal profile information from WHOOP",
                         "get_body_measurement_data": "Get the user's personal body measurement data from WHOOP",
                         "get_sports_mapping": "Get WHOOP sports mapping data for workout types",
                         "get_workout_analysis": "Analyze the user's workout data and provide insights",
                         "get_sleep_quality_analysis": "Analyze the user's sleep quality and provide personalized insights",
                         "get_recovery_load_analysis": "Analyze the user's recovery and training load data",
-                        "get_training_readiness": "Get the user's training readiness score and recommendations",
+                        "get_training_readiness": "Get comprehensive training readiness assessment combining recovery, sleep, and strain data",
                         "search_whoop_sports": "Search for WHOOP sport types and activities",
                         "set_custom_prompt": "Set a custom prompt for WHOOP data analysis",
                         "get_custom_prompt": "Get the current custom prompt for WHOOP data analysis",
                         "clear_custom_prompt": "Clear the custom prompt for WHOOP data analysis",
-                        "get_daily_summary": "Get a comprehensive daily summary of the user's WHOOP data including sleep, recovery, and activity"
+                        "get_daily_summary": "Get a comprehensive daily health summary combining all WHOOP metrics with smart recommendations",
+                        "get_workout_trends": "Analyze workout trends, training patterns, and athletic profiling over multiple days (2-60 days)",
+                        "get_recovery_trends": "Analyze recovery trends and patterns over multiple days (7-60 days)",
+                        "get_strain_trends": "Analyze strain and training load progression over multiple days (2-60 days)",
+                        "get_sleep_trends": "Analyze sleep patterns and quality trends over multiple days (2-60 days)",
+                        "get_recovery_chart": "Generate ASCII chart visualization of recovery score trends over time",
+                        "get_tools_guide": "Get a comprehensive guide to all available WHOOP analytics tools and their capabilities"
                     }
                     for tool_name, description in known_tools.items():
                         tool_schema = {
@@ -546,11 +554,13 @@ async def mcp_http(request: Request):
             
             # Valid WHOOP MCP tools that can provide real user data
             valid_tools = [
-                "get_sleep_data", "get_recovery_data", "get_workout_data", "get_cycle_data",
+                "get_sleep_daily", "get_recovery_daily", "get_workout_daily", "get_cycle_daily",
                 "get_profile_data", "get_body_measurement_data", "get_sports_mapping",
                 "get_workout_analysis", "get_sleep_quality_analysis", "get_recovery_load_analysis",
                 "get_training_readiness", "search_whoop_sports", "set_custom_prompt",
-                "get_custom_prompt", "clear_custom_prompt", "get_daily_summary"
+                "get_current_prompt", "get_daily_summary", "get_workout_trends",
+                "get_recovery_trends", "get_strain_trends", "get_sleep_trends",
+                "get_recovery_chart", "get_tools_guide", "authenticate_with_whoop", "check_authentication_status"
             ]
             
             if tool_name in valid_tools:

@@ -642,21 +642,16 @@ def format_profile_data(data: Dict[str, Any]) -> str:
     if "error" in data:
         return f"Error fetching profile data: {data['error']}"
     
-    profile = data.get("user", {})
-    
-    # Format member since date
-    member_since = profile.get('createdAt', 'Unknown')
-    if member_since != 'Unknown':
-        try:
-            member_dt = datetime.fromisoformat(member_since.replace('Z', '+00:00'))
-            member_since = member_dt.strftime("%B %d, %Y")
-        except (ValueError, TypeError):
-            pass
+    # WHOOP API v2 structure: data is directly in root, not nested under "user"
+    user_id = data.get('user_id', 'Unknown')
+    first_name = data.get('first_name', 'Unknown')
+    last_name = data.get('last_name', 'Unknown') 
+    email = data.get('email', 'Unknown')
     
     return f"""
-Name: {profile.get('firstName', 'Unknown')} {profile.get('lastName', 'Unknown')}
-Email: {profile.get('email', 'Unknown')}
-Member Since: {member_since}
+Name: {first_name} {last_name}
+Email: {email}
+User ID: {user_id}
 """
 
 def format_body_measurement_data(data: Dict[str, Any]) -> str:
@@ -830,11 +825,23 @@ Token type: {token_data.get('token_type', 'Not found')}
 
 # WHOOP API tools
 @mcp.tool()
-async def get_sleep_data(date: Optional[str] = None) -> str:
-    """Get sleep data from WHOOP.
+async def get_sleep_daily(date: Optional[str] = None) -> str:
+    """Get detailed sleep data for a single night from WHOOP.
+    
+    This tool provides comprehensive sleep metrics for one specific night including:
+    - Sleep stages (light, deep, REM sleep duration)
+    - Sleep efficiency and performance scores
+    - Respiratory rate and sleep consistency
+    
+    For multi-day sleep analysis, use 'get_sleep_trends' instead.
     
     Args:
-        date: Optional date in YYYY-MM-DD format. If not provided, returns most recent data.
+        date: Optional date in YYYY-MM-DD format (e.g., '2024-01-15'). 
+              If not provided, returns most recent sleep data.
+              
+    Example Usage:
+        - get_single_night_sleep_data() → Latest night's sleep
+        - get_single_night_sleep_data('2024-01-15') → January 15th sleep data
     """
     try:
         with open(TOKEN_FILE, "r") as f:
@@ -861,11 +868,24 @@ async def get_sleep_data(date: Optional[str] = None) -> str:
     return format_sleep_data(data)
 
 @mcp.tool()
-async def get_recovery_data(date: Optional[str] = None) -> str:
-    """Get recovery data from WHOOP.
+async def get_recovery_daily(date: Optional[str] = None) -> str:
+    """Get detailed recovery metrics for a single day from WHOOP.
+    
+    This tool provides comprehensive recovery assessment for one specific day including:
+    - Recovery score (0-100%)
+    - Heart Rate Variability (HRV) in milliseconds
+    - Resting Heart Rate (RHR)
+    - Skin temperature and SpO2 levels
+    
+    For multi-day recovery trends, use 'get_recovery_trends' instead.
     
     Args:
-        date: Optional date in YYYY-MM-DD format. If not provided, returns most recent data.
+        date: Optional date in YYYY-MM-DD format (e.g., '2024-01-15'). 
+              If not provided, returns most recent recovery data.
+              
+    Example Usage:
+        - get_single_day_recovery_data() → Today's recovery metrics
+        - get_single_day_recovery_data('2024-01-15') → January 15th recovery
     """
     try:
         with open(TOKEN_FILE, "r") as f:
@@ -892,11 +912,24 @@ async def get_recovery_data(date: Optional[str] = None) -> str:
     return format_recovery_data(data)
 
 @mcp.tool()
-async def get_workout_data(workout_id: Optional[str] = None) -> str:
-    """Get workout data from WHOOP.
+async def get_workout_daily(workout_id: Optional[str] = None) -> str:
+    """Get detailed data for a single workout from WHOOP.
+    
+    This tool provides comprehensive metrics for one specific workout including:
+    - Workout strain score (0-21)
+    - Average and maximum heart rate
+    - Calories burned and duration
+    - Sport type and workout zones
+    
+    For multi-day workout analysis, consider using 'get_strain_trends' or the upcoming 'get_workout_trends'.
     
     Args:
-        workout_id: Optional workout ID. If not provided, returns most recent workout.
+        workout_id: Optional workout ID (UUID string). 
+                   If not provided, returns most recent workout.
+                   
+    Example Usage:
+        - get_single_workout_data() → Latest workout details
+        - get_single_workout_data('abc123-def456') → Specific workout by ID
     """
     try:
         with open(TOKEN_FILE, "r") as f:
@@ -918,11 +951,24 @@ async def get_workout_data(workout_id: Optional[str] = None) -> str:
     return await format_workout_data(data, access_token)
 
 @mcp.tool()
-async def get_cycle_data(date: Optional[str] = None) -> str:
-    """Get daily cycle data from WHOOP (includes strain).
+async def get_cycle_daily(date: Optional[str] = None) -> str:
+    """Get daily strain and physiological cycle data for a single day from WHOOP.
+    
+    This tool provides comprehensive daily metrics including:
+    - Daily strain score (cardiovascular load)
+    - Average and maximum heart rate for the day
+    - Total calories burned (kilojoules converted to kcal)
+    - Physiological cycle timing
+    
+    For multi-day strain analysis, use 'get_strain_trends' instead.
     
     Args:
-        date: Optional date in YYYY-MM-DD format. If not provided, returns most recent data.
+        date: Optional date in YYYY-MM-DD format (e.g., '2024-01-15'). 
+              If not provided, returns most recent cycle data.
+              
+    Example Usage:
+        - get_single_day_strain_data() → Today's strain metrics
+        - get_single_day_strain_data('2024-01-15') → January 15th strain data
     """
     try:
         with open(TOKEN_FILE, "r") as f:
@@ -1242,8 +1288,22 @@ Recovery Strategies:
 async def get_training_readiness(date: Optional[str] = None) -> str:
     """Get comprehensive training readiness assessment combining recovery, sleep, and strain data.
     
+    This advanced tool provides intelligent training recommendations by analyzing:
+    - Recovery score and cardiovascular readiness
+    - Sleep quality impact on performance capacity
+    - Recent strain load and fatigue levels
+    - Personalized training intensity recommendations
+    - Risk assessment for overtraining
+    
+    Perfect for making informed decisions about workout intensity and training planning.
+    
     Args:
-        date: Optional date in YYYY-MM-DD format. If not provided, analyzes most recent data.
+        date: Optional date in YYYY-MM-DD format (e.g., '2024-01-15'). 
+              If not provided, analyzes most recent data for current readiness.
+              
+    Example Usage:
+        - get_comprehensive_training_readiness() → Current training readiness
+        - get_comprehensive_training_readiness('2024-01-15') → January 15th readiness
     """
     try:
         with open(TOKEN_FILE, "r") as f:
@@ -1427,17 +1487,32 @@ def resolve_date_input(date_input: Optional[str]) -> Optional[str]:
 
 @mcp.tool()
 async def get_daily_summary(date: Optional[str] = None) -> str:
-    """Get time-aware daily summary with contextual recommendations based on current time.
+    """Get a comprehensive daily health summary combining all WHOOP metrics with smart recommendations.
     
-    This tool provides a comprehensive overview of your WHOOP data using proven working components:
-    - **Composition Architecture**: Uses existing working tools as building blocks
-    - **Current Cycle Priority**: Always prioritizes your current physiological cycle as "today"
-    - **Intelligent Fallback**: When historical data isn't available, falls back to current cycle
-    - **Time-Aware Content**: Adapts recommendations based on current time (daytime vs evening)
+    This intelligent tool provides a complete daily overview including:
+    - Recovery status and readiness for training
+    - Sleep quality and efficiency analysis
+    - Strain and training load assessment
+    - Time-aware recommendations (adapts to current time of day)
+    - Actionable insights based on your personal patterns
+    
+    This tool synthesizes data from multiple sources to provide holistic health insights.
+    Perfect for daily check-ins and understanding your overall wellness status.
     
     Args:
-        date: Optional date in YYYY-MM-DD format, or relative terms like 'yesterday', 'today'. 
-              If not provided, uses current cycle as fallback.
+        date: Optional date in YYYY-MM-DD format (e.g., '2024-01-15'), or relative terms like 'yesterday', 'today'. 
+              If not provided, uses current cycle as fallback with real-time insights.
+              
+    Example Usage:
+        - get_daily_summary() → Today's complete health overview
+        - get_daily_summary('2024-01-15') → January 15th summary
+        - get_daily_summary('yesterday') → Yesterday's analysis
+    
+    Technical Features:
+        - Composition Architecture: Uses existing working tools as building blocks
+        - Current Cycle Priority: Always prioritizes your current physiological cycle as "today"
+        - Intelligent Fallback: When historical data isn't available, falls back to current cycle
+        - Time-Aware Content: Adapts recommendations based on current time (daytime vs evening)
     """
     # Resolve date input (handles 'yesterday', 'today', etc.)
     resolved_date = resolve_date_input(date)
@@ -1445,10 +1520,10 @@ async def get_daily_summary(date: Optional[str] = None) -> str:
     # Use existing working tools to get data (composition approach)
     try:
         # Get all data using proven working tools
-        cycle_result = await get_cycle_data(resolved_date)
-        sleep_result = await get_sleep_data(resolved_date)
-        recovery_result = await get_recovery_data(resolved_date)
-        workout_result = await get_workout_data()  # Recent workouts
+        cycle_result = await get_cycle_daily(resolved_date)
+        sleep_result = await get_sleep_daily(resolved_date)
+        recovery_result = await get_recovery_daily(resolved_date)
+        workout_result = await get_workout_daily()  # Recent workouts
         
         # If any core data is missing, try without date (fallback to current cycle)
         if not resolved_date and any("error" in str(result) or "Could not" in str(result) for result in [cycle_result, sleep_result, recovery_result]):
@@ -1456,9 +1531,9 @@ async def get_daily_summary(date: Optional[str] = None) -> str:
             pass
         elif resolved_date and any("error" in str(result) or "Could not" in str(result) for result in [cycle_result, sleep_result, recovery_result]):
             # Historical date failed, try current cycle as fallback
-            cycle_result = await get_cycle_data()
-            sleep_result = await get_sleep_data()
-            recovery_result = await get_recovery_data()
+            cycle_result = await get_cycle_daily()
+            sleep_result = await get_sleep_daily()
+            recovery_result = await get_recovery_daily()
             resolved_date = None  # Mark as current cycle
         
         # Create comprehensive summary from individual tool results
@@ -1988,11 +2063,27 @@ def set_custom_prompt(prompt: Optional[str] = None) -> str:
 
 @mcp.tool()
 async def get_recovery_trends(days: int = 7, end_date: Optional[str] = None) -> str:
-    """Analyze recovery trends over multiple days.
+    """Analyze recovery trends and patterns over multiple days (7-60 days).
+    
+    This powerful tool provides comprehensive recovery analysis including:
+    - Recovery score trends with statistical analysis
+    - Heart Rate Variability (HRV) progression
+    - Resting Heart Rate (RHR) trends
+    - Trend direction (improving/declining/stable)
+    - Personalized insights and recommendations
+    
+    Perfect for understanding recovery patterns and optimizing training load.
     
     Args:
         days: Number of days to analyze (default: 7, max: 60)
+              Recommended: 7 days for weekly patterns, 30 days for monthly trends
         end_date: End date in YYYY-MM-DD format (default: today)
+                 Use to analyze historical periods
+    
+    Example Usage:
+        - get_recovery_trends() → Past 7 days recovery trends
+        - get_recovery_trends(30) → Monthly recovery analysis
+        - get_recovery_trends(14, '2024-01-15') → 2 weeks ending Jan 15
     
     Returns:
         Comprehensive recovery trend analysis with insights and recommendations.
@@ -2132,11 +2223,27 @@ Stability: {rhr_stats['stability'].title()}
 
 @mcp.tool()
 async def get_strain_trends(days: int = 14, end_date: Optional[str] = None) -> str:
-    """Analyze strain trends and training load progression over multiple days.
+    """Analyze strain and training load progression over multiple days (2-60 days).
+    
+    This comprehensive tool provides detailed training analysis including:
+    - Daily strain trends and training load distribution
+    - Heart rate patterns and intensity zones
+    - Energy expenditure (calories) tracking
+    - Training frequency and consistency metrics
+    - Personalized training recommendations
+    
+    Essential for monitoring training progression and preventing overtraining.
     
     Args:
         days: Number of days to analyze (default: 14, max: 60)
+              Recommended: 14 days for training blocks, 30+ for season analysis
         end_date: End date in YYYY-MM-DD format (default: today)
+                 Use to analyze specific training periods
+    
+    Example Usage:
+        - get_multi_day_strain_trends() → Past 2 weeks training load
+        - get_multi_day_strain_trends(30) → Monthly training analysis
+        - get_multi_day_strain_trends(7, '2024-01-15') → Week ending Jan 15
     
     Returns:
         Comprehensive strain trend analysis with training load insights.
@@ -2317,11 +2424,27 @@ Weekly Total: {int(calories_stats['average'] * 7)} kcal
 
 @mcp.tool()
 async def get_sleep_trends(days: int = 30, end_date: Optional[str] = None) -> str:
-    """Analyze sleep trends and patterns over multiple days.
+    """Analyze sleep patterns and quality trends over multiple days (2-60 days).
+    
+    This comprehensive sleep analysis tool provides:
+    - Sleep efficiency and performance trends
+    - Sleep duration consistency and patterns
+    - Sleep latency (time to fall asleep) analysis
+    - Sleep disturbance frequency tracking
+    - Sleep quality distribution and recommendations
+    
+    Perfect for optimizing sleep habits and identifying sleep pattern issues.
     
     Args:
         days: Number of days to analyze (default: 30, max: 60)
+              Recommended: 30 days for comprehensive sleep pattern analysis
         end_date: End date in YYYY-MM-DD format (default: today)
+                 Use to analyze historical sleep periods
+    
+    Example Usage:
+        - get_multi_day_sleep_trends() → Past month sleep analysis
+        - get_multi_day_sleep_trends(14) → Two weeks sleep patterns
+        - get_multi_day_sleep_trends(60, '2024-01-31') → Two months ending Jan 31
     
     Returns:
         Comprehensive sleep trend analysis with optimization insights.
@@ -2545,15 +2668,30 @@ Quality: {"Excellent" if disturbance_stats['average'] < 2 else "Good" if disturb
     return summary
 
 @mcp.tool()
-async def generate_recovery_chart(days: int = 14, end_date: Optional[str] = None) -> str:
-    """Generate ASCII chart visualization of recovery trends.
+async def get_recovery_chart(days: int = 14, end_date: Optional[str] = None) -> str:
+    """Generate ASCII chart visualization of recovery score trends over time.
+    
+    This visualization tool creates an easy-to-read ASCII chart showing:
+    - Daily recovery scores plotted over time
+    - Trend lines and patterns
+    - Statistical summary with averages and ranges
+    - Visual identification of peaks and valleys
+    
+    Perfect for quickly spotting recovery patterns and sharing visual summaries.
     
     Args:
         days: Number of days to chart (default: 14, max: 30)
+              Recommended: 14 days for detailed view, 30 days for broader patterns
         end_date: End date in YYYY-MM-DD format (default: today)
+                 Use to chart historical periods
+    
+    Example Usage:
+        - generate_visual_recovery_chart() → Past 2 weeks recovery chart
+        - generate_visual_recovery_chart(30) → Monthly recovery visualization
+        - generate_visual_recovery_chart(7, '2024-01-15') → Week ending Jan 15
     
     Returns:
-        ASCII chart showing recovery score trends over time.
+        ASCII chart showing recovery score trends over time with summary statistics.
     """
     if days > 30:
         days = 30  # Limit for readability
@@ -2641,6 +2779,386 @@ def get_current_prompt() -> str:
         return "No custom prompt is currently set."
     
     return f"Current custom prompt: '{prompt}'"
+
+@mcp.tool()
+async def get_workout_trends(days: int = 30, end_date: Optional[str] = None, sport_filter: Optional[str] = None) -> str:
+    """Analyze workout trends, training patterns, and athletic profiling over multiple days (2-60 days).
+    
+    This comprehensive workout analysis tool provides:
+    - Training frequency and consistency patterns
+    - Sport distribution and athletic profiling
+    - Workout intensity progression (strain analysis)
+    - Duration and training volume trends
+    - Heart rate zone distribution analysis
+    - Performance metrics (distance, pace, elevation)
+    - Training load periodization assessment
+    - Recovery patterns between workouts
+    
+    Essential for determining athlete type, training effectiveness, and sport-specific optimization.
+    
+    Args:
+        days: Number of days to analyze (default: 30, max: 60)
+              Recommended: 30 days for athletic profiling, 60 days for periodization analysis
+        end_date: End date in YYYY-MM-DD format (default: today)
+                 Use to analyze specific training periods
+        sport_filter: Optional sport name filter (e.g., "running", "cycling", "weightlifting")
+                     Use to analyze sport-specific patterns
+    
+    Example Usage:
+        - get_workout_trends() → Past month training analysis
+        - get_workout_trends(60) → Two months training periodization
+        - get_workout_trends(14, sport_filter="running") → Running-specific analysis
+        - get_workout_trends(30, '2024-01-31') → January training analysis
+    
+    Returns:
+        Comprehensive workout trend analysis with athletic profiling and training insights.
+    """
+    if days > 60:
+        days = 60  # Limit to reasonable range
+    if days < 2:
+        days = 2   # Minimum for trend analysis
+    
+    try:
+        with open(TOKEN_FILE, "r") as f:
+            token_data = json.load(f)
+            access_token = token_data.get("access_token")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return "You are not authenticated with WHOOP. Use the authenticate_with_whoop tool to authenticate."
+    
+    # Fetch workout data for the specified period
+    workout_records = await fetch_multi_day_data("activity/workout", days, access_token, end_date)
+    
+    if not workout_records:
+        return f"No workout data found for the past {days} days."
+    
+    # Apply sport filter if specified
+    if sport_filter:
+        sport_filter_lower = sport_filter.lower()
+        workout_records = [w for w in workout_records if w.get("sport_name", "").lower() == sport_filter_lower]
+        if not workout_records:
+            return f"No {sport_filter} workouts found in the past {days} days."
+    
+    # Extract workout metrics for analysis
+    workout_data = []
+    sport_distribution = {}
+    total_workouts = len(workout_records)
+    
+    for record in workout_records:
+        score = record.get("score", {}) or {}
+        sport_name = record.get("sport_name", "Unknown")
+        start_time = record.get("start", "")
+        end_time = record.get("end", "")
+        
+        # Calculate duration in minutes
+        duration_minutes = 0
+        if start_time and end_time:
+            try:
+                start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+                duration_minutes = (end_dt - start_dt).total_seconds() / 60
+            except:
+                duration_minutes = 0
+        
+        workout_info = {
+            'date': start_time[:10] if start_time else '',
+            'sport': sport_name,
+            'strain': score.get('strain', 0) or 0,
+            'duration_minutes': duration_minutes,
+            'avg_hr': score.get('average_heart_rate', 0) or 0,
+            'max_hr': score.get('max_heart_rate', 0) or 0,
+            'kilojoules': score.get('kilojoule', 0) or 0,
+            'distance_meters': score.get('distance_meter', 0) or 0,
+            'altitude_gain': score.get('altitude_gain_meter', 0) or 0,
+            'zone_durations': score.get('zone_durations', {}) or {}
+        }
+        
+        workout_data.append(workout_info)
+        
+        # Track sport distribution
+        sport_distribution[sport_name] = sport_distribution.get(sport_name, 0) + 1
+    
+    # Calculate comprehensive statistics
+    strain_values = [w['strain'] for w in workout_data if w['strain'] > 0]
+    duration_values = [w['duration_minutes'] for w in workout_data if w['duration_minutes'] > 0]
+    avg_hr_values = [w['avg_hr'] for w in workout_data if w['avg_hr'] > 0]
+    calories_values = [w['kilojoules'] / 4.184 for w in workout_data if w['kilojoules'] > 0]  # Convert to calories
+    distance_values = [w['distance_meters'] / 1000 for w in workout_data if w['distance_meters'] > 0]  # Convert to km
+    
+    strain_stats = calculate_trend_statistics(strain_values)
+    duration_stats = calculate_trend_statistics(duration_values)
+    avg_hr_stats = calculate_trend_statistics(avg_hr_values)
+    
+    start_date, final_date = calculate_date_range(days, end_date)
+    
+    # Calculate training frequency
+    workout_frequency = total_workouts / (days / 7)  # Workouts per week
+    
+    # Determine athlete type based on patterns
+    athlete_type = "Mixed Training"
+    if sport_distribution:
+        top_sport = max(sport_distribution, key=sport_distribution.get)
+        top_sport_percentage = (sport_distribution[top_sport] / total_workouts) * 100
+        
+        if top_sport_percentage >= 70:
+            if top_sport.lower() in ['running', 'cycling', 'swimming', 'rowing']:
+                athlete_type = "Endurance Specialist"
+            elif top_sport.lower() in ['weightlifting', 'strength training', 'crossfit']:
+                athlete_type = "Strength/Power Specialist"
+            else:
+                athlete_type = f"{top_sport.title()} Specialist"
+        elif len(sport_distribution) >= 3:
+            athlete_type = "Multi-Sport Athlete"
+    
+    # Build comprehensive analysis
+    summary = f"""
+{'='*70}
+🏋️ WORKOUT TRENDS & ATHLETIC PROFILING ({days} days)
+{'='*70}
+
+📅 Period: {start_date} to {final_date}
+🏃 Total Workouts: {total_workouts}
+📊 Training Frequency: {workout_frequency:.1f} workouts/week
+🎯 Athletic Profile: {athlete_type}
+
+"""
+    
+    # Sport Distribution Analysis
+    if sport_distribution:
+        summary += "🏆 SPORT DISTRIBUTION\n"
+        sorted_sports = sorted(sport_distribution.items(), key=lambda x: x[1], reverse=True)
+        for sport, count in sorted_sports:
+            percentage = (count / total_workouts) * 100
+            summary += f"  • {sport.title()}: {count} workouts ({percentage:.1f}%)\n"
+        summary += "\n"
+    
+    # Training Intensity Analysis
+    if strain_stats.get("error"):
+        summary += "🔥 TRAINING INTENSITY\nInsufficient strain data available.\n\n"
+    else:
+        # Classify intensity distribution
+        high_intensity = len([s for s in strain_values if s >= 15])
+        moderate_intensity = len([s for s in strain_values if 10 <= s < 15])
+        low_intensity = len([s for s in strain_values if s < 10])
+        
+        trend_emoji = "📈" if strain_stats["trend_direction"] == "improving" else "📉" if strain_stats["trend_direction"] == "declining" else "➡️"
+        
+        summary += f"""🔥 TRAINING INTENSITY ANALYSIS {trend_emoji}
+Average Strain: {strain_stats['average']:.1f}/21.0
+Range: {strain_stats['minimum']:.1f} - {strain_stats['maximum']:.1f}
+Trend: {strain_stats['trend_direction'].title()} ({strain_stats['trend']:+.2f} per day)
+
+Intensity Distribution:
+  High Intensity (15.0-21.0): {high_intensity} workouts ({high_intensity/len(strain_values)*100:.1f}%)
+  Moderate Intensity (10.0-14.9): {moderate_intensity} workouts ({moderate_intensity/len(strain_values)*100:.1f}%)
+  Low Intensity (<10.0): {low_intensity} workouts ({low_intensity/len(strain_values)*100:.1f}%)
+
+"""
+    
+    # Training Volume Analysis
+    if duration_stats.get("error"):
+        summary += "⏱️ TRAINING VOLUME\nInsufficient duration data available.\n\n"
+    else:
+        total_training_hours = sum(duration_values) / 60
+        avg_hours_per_week = total_training_hours / (days / 7)
+        
+        summary += f"""⏱️ TRAINING VOLUME ANALYSIS
+Total Training Time: {total_training_hours:.1f} hours
+Weekly Average: {avg_hours_per_week:.1f} hours/week
+Average Workout: {duration_stats['average']:.0f} minutes
+Range: {duration_stats['minimum']:.0f} - {duration_stats['maximum']:.0f} minutes
+
+"""
+    
+    # Heart Rate Analysis
+    if avg_hr_stats.get("error"):
+        summary += "❤️ CARDIOVASCULAR PATTERNS\nInsufficient heart rate data available.\n\n"
+    else:
+        summary += f"""❤️ CARDIOVASCULAR PATTERNS
+Average Workout HR: {int(avg_hr_stats['average'])} bpm
+Range: {int(avg_hr_stats['minimum'])} - {int(avg_hr_stats['maximum'])} bpm
+Consistency: {avg_hr_stats['stability'].title()}
+
+"""
+    
+    # Performance Metrics (if available)
+    if distance_values:
+        total_distance = sum(distance_values)
+        avg_distance_per_workout = total_distance / len(distance_values)
+        weekly_distance = total_distance / (days / 7)
+        
+        summary += f"""🏃 PERFORMANCE METRICS
+Total Distance: {total_distance:.1f} km
+Weekly Average: {weekly_distance:.1f} km/week
+Average per Workout: {avg_distance_per_workout:.1f} km
+
+"""
+    
+    if calories_values:
+        total_calories = sum(calories_values)
+        avg_calories_per_workout = total_calories / len(calories_values)
+        weekly_calories = total_calories / (days / 7)
+        
+        summary += f"""⚡ ENERGY EXPENDITURE
+Total Calories: {int(total_calories)} kcal
+Weekly Average: {int(weekly_calories)} kcal/week
+Average per Workout: {int(avg_calories_per_workout)} kcal
+
+"""
+    
+    # Athletic Profiling Insights
+    summary += "🎯 ATHLETIC PROFILING & INSIGHTS\n"
+    
+    # Training pattern analysis
+    if workout_frequency >= 6:
+        summary += "• High-frequency trainer - excellent consistency for elite performance\n"
+    elif workout_frequency >= 4:
+        summary += "• Moderate-frequency trainer - good consistency for fitness goals\n"
+    elif workout_frequency >= 2:
+        summary += "• Low-moderate frequency - room for increased consistency\n"
+    else:
+        summary += "• Low training frequency - consider increasing workout consistency\n"
+    
+    # Intensity pattern insights
+    if not strain_stats.get("error"):
+        if strain_stats["average"] >= 15:
+            summary += "• High-intensity focused training - monitor recovery closely\n"
+        elif strain_stats["average"] >= 12:
+            summary += "• Moderate-high intensity training - good for fitness building\n"
+        elif strain_stats["average"] >= 8:
+            summary += "• Balanced intensity approach - sustainable for long-term progress\n"
+        else:
+            summary += "• Lower intensity focus - consider adding higher intensity sessions\n"
+        
+        # Training progression insights
+        if strain_stats["trend_direction"] == "improving":
+            summary += "• Positive training progression - intensity building effectively\n"
+        elif strain_stats["trend_direction"] == "declining":
+            summary += "• Declining intensity trend - may indicate fatigue or detraining\n"
+    
+    # Sport-specific insights
+    if sport_distribution:
+        if athlete_type == "Endurance Specialist":
+            summary += "• Endurance-focused profile - emphasize aerobic base and recovery\n"
+        elif athlete_type == "Strength/Power Specialist":
+            summary += "• Strength/Power profile - focus on recovery between intense sessions\n"
+        elif athlete_type == "Multi-Sport Athlete":
+            summary += "• Cross-training approach - excellent for overall fitness and injury prevention\n"
+    
+    summary += "\n" + "="*70
+    
+    return summary
+
+@mcp.tool()
+def get_tools_guide() -> str:
+    """Get a comprehensive guide to all available WHOOP analytics tools and their capabilities.
+    
+    This essential tool explains what health data and analytics are available,
+    helping agents understand the full scope of WHOOP insights for research and analysis.
+    
+    Use this tool first to understand what's possible with WHOOP data analysis.
+    """
+    
+    return """
+🏥 WHOOP HEALTH ANALYTICS TOOLKIT
+═══════════════════════════════════════════════════════════════════════════════════
+
+📊 COMPREHENSIVE HEALTH DATA AVAILABLE
+
+🔹 SINGLE-DAY DATA TOOLS (Latest or Specific Date)
+   • get_single_night_sleep_data(date) → Sleep stages, efficiency, performance
+   • get_single_day_recovery_data(date) → Recovery score, HRV, RHR, temperature
+   • get_single_workout_data(workout_id) → Workout strain, HR zones, calories
+   • get_single_day_strain_data(date) → Daily strain, avg/max HR, energy
+   • get_profile_data() → User profile and basic information
+   • get_body_measurement_data() → Height, weight, max heart rate
+
+🔹 MULTI-DAY TREND ANALYSIS (7-60 Days Historical)
+   • get_multi_day_recovery_trends(days, end_date) → Recovery patterns & HRV trends
+   • get_multi_day_strain_trends(days, end_date) → Training load progression
+   • get_multi_day_sleep_trends(days, end_date) → Sleep quality & consistency patterns
+   • get_multi_day_workout_trends(days, end_date, sport_filter) → Training patterns & athletic profiling
+   • generate_visual_recovery_chart(days, end_date) → ASCII chart visualization
+
+🔹 ADVANCED ANALYSIS TOOLS
+   • get_comprehensive_training_readiness(date) → Training recommendations
+   • get_workout_analysis(workout_id) → Detailed workout metrics & zones
+   • get_sleep_quality_analysis(date) → Sleep efficiency deep dive
+   • get_recovery_load_analysis(date) → Cardiovascular stress analysis
+
+🔹 COMPREHENSIVE SUMMARIES
+   • get_comprehensive_daily_summary(date) → Complete daily health overview
+   • search_whoop_sports(query) → Sport-specific workout history
+   • get_sports_mapping() → Available sports and IDs
+
+💡 KEY CAPABILITIES FOR RESEARCH AGENTS
+
+✅ MULTI-DAY ANALYTICS (Up to 60 days)
+   - Recovery trends with statistical analysis
+   - Training load progression and patterns
+   - Sleep quality consistency over time
+   - Workout trends and athletic profiling
+   - Heart rate variability tracking
+   - Trend direction analysis (improving/declining/stable)
+
+✅ COMPREHENSIVE METRICS COVERED
+   - Workout Type, Duration, Strain (0-21 scale)
+   - Training frequency, intensity distribution, sport profiling
+   - Recovery Scores (0-100%), HRV, Resting Heart Rate
+   - Sleep Quality, Efficiency, Consistency
+   - VO2 Max estimation (via max heart rate data)
+   - Energy expenditure and training load
+   - Athletic profiling (endurance vs strength vs multi-sport)
+
+✅ INTELLIGENT INSIGHTS
+   - Personalized recommendations based on data
+   - Cross-metric correlation analysis
+   - Time-aware suggestions (adapts to time of day)
+   - Overtraining risk assessment
+   - Sleep optimization guidance
+
+📋 USAGE PATTERNS FOR AGENTS
+
+🎯 Daily Health Check:
+   get_comprehensive_daily_summary() → Complete current status
+
+🎯 Weekly Training Analysis:
+   get_multi_day_workout_trends(7) → Training patterns and frequency
+   get_multi_day_strain_trends(7) → Training load patterns
+   get_multi_day_recovery_trends(7) → Recovery adequacy
+
+🎯 Monthly Health Trends:
+   get_multi_day_sleep_trends(30) → Sleep pattern analysis
+   get_multi_day_recovery_trends(30) → Long-term recovery trends
+
+🎯 Training Planning:
+   get_comprehensive_training_readiness() → Current readiness
+   get_multi_day_workout_trends(14) → Training patterns & periodization
+   get_multi_day_strain_trends(14) → Recent training load
+
+🎯 Performance Research:
+   get_multi_day_workout_trends(60) → Athletic profiling & training analysis
+   get_multi_day_recovery_trends(60) → Long-term patterns
+   get_multi_day_strain_trends(60) → Training periodization analysis
+
+⚡ AUTHENTICATION
+   authenticate_with_whoop() → Required first step
+   check_authentication_status() → Verify connection
+
+📈 QUICK START FOR AGENTS
+1. authenticate_with_whoop() 
+2. get_comprehensive_daily_summary() → Get overview
+3. get_multi_day_recovery_trends(14) → Understand recent patterns
+4. Use specific tools based on research needs
+
+💡 PRO TIPS
+• Use multi-day tools (7-60 days) for trend analysis
+• Combine recovery + strain trends for training insights
+• Daily summary tool provides holistic health picture
+• All date parameters use YYYY-MM-DD format
+• Tools provide actionable recommendations, not just data
+
+═══════════════════════════════════════════════════════════════════════════════════
+    """
 
 if __name__ == "__main__":
     # Initialize auth event

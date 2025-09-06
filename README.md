@@ -1,301 +1,183 @@
-# 🏃‍♂️ WHOOP MCP Server
+# WHOOP x Parallel AI MCP Integration
 
-A comprehensive **Model Context Protocol (MCP) server** for accessing WHOOP fitness and health data with enhanced API v2 features, real-time analytics, and secure cloud deployment.
+A demonstration of how to use [Parallel AI](https://parallel.ai) with WHOOP fitness data through the Model Context Protocol (MCP). This project shows how AI agents can access and analyze your personal WHOOP health and fitness data in real-time.
 
-## ✨ Features
+**Forked from:** [dpshade/WHOOP-mcp](https://github.com/dpshade/WHOOP-mcp) - A comprehensive MCP server for WHOOP data. The only adjustment made to this server was adding a workout analysis tool, to access strain and excercise type data for each workout.
 
-### 🚀 **WHOOP API v2 Integration**
-- **Enhanced sleep analysis** with sleep latency and efficiency scores
-- **Elevation tracking** for workouts (altitude gain/change)
-- **Recovery load breakdown** by cardiovascular, musculoskeletal, and metabolic systems
-- **Training readiness assessment** combining multiple health metrics
-- **Body composition tracking** with comprehensive measurements
-- **Data quality indicators** showing percent recorded for each metric
+## What This Demonstrates
 
-### 🎯 **Advanced Analytics Tools**
-- **Workout Analysis** - Detailed performance metrics with heart rate zones
-- **Sleep Quality Analysis** - Comprehensive sleep optimization recommendations  
-- **Recovery Load Analysis** - System-specific recovery strategies
-- **Training Readiness** - Multi-factor readiness scoring
+- **AI Agent Integration**: Parallel AI agents can access your WHOOP data through MCP
+- **Real-time Analysis**: Stream live analysis progress as the AI processes your fitness data
+- **Personalized Insights**: Get AI-powered insights based on your actual WHOOP metrics
+- **Multi-tool Coordination**: Watch as AI uses multiple WHOOP data tools to build comprehensive analysis
 
-### 🌐 **Multiple Connection Methods**
-- **STDIO** - Local development with Claude Desktop
-- **WebSocket** - Real-time cloud communication
-- **HTTP REST API** - Automation and integration
-- **HTTP MCP** - Parallel Task API compatible transport
-- **SSE** - Server-sent events for live monitoring
+## Prerequisites
 
-### 🔒 **Enterprise Security**
-- **API key authentication** for all sensitive endpoints
-- **Rate limiting** (60 requests/minute per IP)
-- **Security headers** (HSTS, CSP, X-Frame-Options)
-- **Input validation** and sanitization
-- **Request logging** with IP tracking
-- **Encrypted cloud deployment** on fly.io
+- Python 3.8+
+- WHOOP account and API access
+- Parallel AI account and API key
+- ngrok for secure tunneling (free account works)
 
-### 🇺🇸 **Enhanced Data Formatting**
-- **US units prioritization** (miles, Fahrenheit, etc.)
-- **EST timezone conversion** for all timestamps
-- **Pretty-printed outputs** with actionable insights
-- **Custom prompts** for personalized responses
+## Quick Start
 
-## 📁 Project Structure
+### 1. Clone and Install Dependencies
 
-```
-WHOOP-mcp/
-├── 📄 README.md              # This file
-├── 🔧 requirements.txt       # Python dependencies
-├── 🔧 pyproject.toml         # Project configuration
-├── 🔧 uv.lock               # Locked dependencies
-├── 🔒 .env.example          # Environment template
-├── 🔒 .gitignore            # Git ignore rules
-│
-├── 🐍 whoop_mcp.py          # Main MCP server
-├── 🌐 web_server.py         # Web/WebSocket server
-│
-├── 📚 docs/                 # Documentation
-│   ├── 📖 stdio-guide.md    # Local STDIO setup
-│   ├── 🌐 websocket-guide.md # WebSocket connections
-│   ├── 🔧 http-guide.md     # REST API usage
-│   ├── 📡 sse-guide.md      # Server-sent events
-│   ├── 🚀 DEPLOYMENT.md     # Cloud deployment
-│   └── 🔒 SECURITY.md       # Security guidelines
-│
-├── 🚀 deployment/           # Deployment files
-│   ├── 🐳 Dockerfile        # Container configuration
-│   ├── ✈️ fly.toml          # fly.io configuration
-│   └── 📜 deploy.sh         # Deployment script
-│
-└── 🧪 tests/               # Test files
-    ├── 🧪 test_deployment.py # Deployment tests
-    ├── 🔒 test_security.py   # Security tests
-    └── 🔄 test_parallel_integration.py # Parallel API tests
-```
-
-## 🚀 Quick Start
-
-### 1. **Local Development (STDIO)**
 ```bash
-# Clone and setup
-git clone <your-repo>
-cd WHOOP-mcp
+git clone <your-repo-url>
+cd WHOOP-mcp-parallel
 
-# Install dependencies
+# Install MCP server dependencies
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your WHOOP API credentials
-
-# Run locally
-python whoop_mcp.py
+# Install demo dependencies
+pip install -r demo_requirements.txt
 ```
 
-📖 **[Complete STDIO Guide](docs/stdio-guide.md)**
+### 2. Set Up WHOOP API Credentials
 
-### 2. **Cloud Deployment (WebSocket/HTTP)**
-```bash
-# Deploy to fly.io
-./deployment/deploy.sh
-
-# Set your WHOOP credentials
-flyctl secrets set WHOOP_CLIENT_ID=your_client_id
-flyctl secrets set WHOOP_CLIENT_SECRET=your_client_secret
-```
-
-🚀 **[Complete Deployment Guide](docs/DEPLOYMENT.md)**
-
-## 📚 Documentation
-
-### Connection Methods
-- **[📖 STDIO Guide](docs/stdio-guide.md)** - Local development with Claude Desktop
-- **[🌐 WebSocket Guide](docs/websocket-guide.md)** - Real-time cloud connections
-- **[🔧 HTTP Guide](docs/http-guide.md)** - REST API automation
-- **[🔄 Parallel API Guide](docs/parallel-api-guide.md)** - AI-powered analysis with Parallel
-- **[📡 SSE Guide](docs/sse-guide.md)** - Server-sent events streaming
-
-### Deployment & Security
-- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - fly.io cloud deployment
-- **[🔒 Security Guide](docs/SECURITY.md)** - Security best practices
-
-## 🛠️ Available Tools
-
-### Core Data Tools
-| Tool | Description |
-|------|-------------|
-| `get_sleep_data` | Sleep data with quality metrics and EST timezone |
-| `get_recovery_data` | Recovery scores with load breakdown |
-| `get_workout_data` | Workout data with sport names and elevation |
-| `get_cycle_data` | Daily cycle data (strain/load) |
-| `get_profile_data` | User profile information |
-| `get_body_measurement_data` | Body composition tracking |
-
-### Advanced Analytics
-| Tool | Description |
-|------|-------------|
-| `get_workout_analysis` | Detailed performance analysis with zones |
-| `get_sleep_quality_analysis` | Sleep optimization recommendations |
-| `get_recovery_load_analysis` | System-specific recovery strategies |
-| `get_training_readiness` | Multi-factor readiness assessment |
-
-### Discovery & Customization
-| Tool | Description |
-|------|-------------|
-| `get_sports_mapping` | Sport ID to name mapping |
-| `search_whoop_sports` | Search for specific sports |
-| `set_custom_prompt` | Customize server responses |
-| `get_custom_prompt` | View current custom prompt |
-| `clear_custom_prompt` | Reset to default prompt |
-
-## 🔧 Configuration
-
-### Environment Variables
-```bash
-# WHOOP API (required)
-WHOOP_CLIENT_ID=your_whoop_client_id
-WHOOP_CLIENT_SECRET=your_whoop_client_secret
-
-# Optional: Custom redirect URI
-WHOOP_REDIRECT_URI=http://localhost:8000/whoop/callback
-
-# Cloud deployment (auto-generated if not set)
-API_SECRET_KEY=your_secure_api_key
-
-# Web server configuration
-PORT=8080
-HOST=0.0.0.0
-ENVIRONMENT=production
-```
-
-### Claude Desktop Integration
-Add to your `~/.claude/mcp.json`:
-
-**Local (STDIO):**
-```json
-{
-  "mcpServers": {
-    "whoop": {
-      "command": "python",
-      "args": ["/path/to/WHOOP-mcp/whoop_mcp.py"],
-      "env": {
-        "WHOOP_CLIENT_ID": "your_client_id",
-        "WHOOP_CLIENT_SECRET": "your_client_secret"
-      }
-    }
-  }
-}
-```
-
-**Cloud (WebSocket):**
-```json
-{
-  "mcpServers": {
-    "whoop-cloud": {
-      "command": "node",
-      "args": ["/path/to/websocket-client.js"],
-      "env": {
-        "WHOOP_MCP_URL": "wss://your-app.fly.dev/mcp",
-        "WHOOP_API_KEY": "your_api_key"
-      }
-    }
-  }
-}
-```
-
-## 🧪 Testing
+Get your WHOOP API credentials from the [WHOOP Developer Portal](https://developer.whoop.com/):
 
 ```bash
-# Setup for Parallel API (gets API key & completes OAuth)
-./setup_parallel_auth.sh
-
-# Test Parallel API integration
-python tests/test_parallel_integration.py
-
-# Test security features
-python tests/test_security.py
-
-# Test deployment
-python tests/test_deployment.py
-
-# Test local server
-python whoop_mcp.py --test
+export WHOOP_CLIENT_ID="your_whoop_client_id"
+export WHOOP_CLIENT_SECRET="your_whoop_client_secret"
 ```
 
-## 🔒 Security
+### 3. Set Up Parallel AI API Key
 
-This project implements enterprise-grade security:
+Get your API key from [Parallel AI](https://parallel.ai):
 
-- ✅ **No sensitive data in git** - All credentials use environment variables
-- ✅ **API key authentication** - Required for all sensitive endpoints  
-- ✅ **Rate limiting** - 60 requests/minute per IP
-- ✅ **Security headers** - HSTS, CSP, X-Frame-Options
-- ✅ **Input validation** - Message size limits and sanitization
-- ✅ **Request logging** - All access monitored with IP tracking
+```bash
+export PARALLEL_API_KEY="your_parallel_api_key"
+```
 
-**[🔒 Security Guide](docs/SECURITY.md)** | **[🛡️ Security Testing](tests/test_security.py)**
+### 4. Start the Local MCP Server
 
-## 📊 Usage Examples
+```bash
+python web_server.py
+```
 
-### Basic Health Check
+You should see:
+```
+INFO: Starting WHOOP MCP Web Server on 0.0.0.0:8080
+INFO: Uvicorn running on http://0.0.0.0:8080
+```
+
+### 5. Expose Server with ngrok
+
+In a new terminal:
+
+```bash
+ngrok http 8080
+```
+
+Copy the HTTPS URL from the output (e.g., `https://abc123.ngrok-free.app`)
+
+### 6. Authenticate with WHOOP
+
+```bash
+curl "https://YOUR-NGROK-URL.ngrok-free.app/whoop/auth"
+```
+
+Follow the returned auth URL to complete WHOOP OAuth authentication.
+
+### 7. Run the Demo
+
+```bash
+python demo_parallel_whoop.py https://YOUR-NGROK-URL.ngrok-free.app
+```
+
+## What You'll See
+
+1. **Server startup** - Your local MCP server starts and exposes WHOOP data tools
+2. **Parallel AI task creation** - A task is submitted to Parallel AI with access to your server
+3. **Real-time streaming** - Watch as the AI:
+   - Plans its analysis approach
+   - Calls your WHOOP MCP tools to get real data
+   - Searches for relevant research and benchmarks
+   - Synthesizes personalized insights
+4. **Final report** - Comprehensive analysis combining your data with research
+
+## Available MCP Tools
+
+The server exposes these tools that Parallel AI can use:
+
+- `get_sleep_data` - Your sleep metrics and quality scores
+- `get_recovery_data` - Recovery scores and HRV data
+- `get_workout_data` - Workout details and performance metrics
+- `get_cycle_data` - Daily strain and recovery cycles
+- `get_profile_data` - Your WHOOP profile information
+- `get_workout_analysis` - Detailed workout performance analysis
+- `get_sleep_quality_analysis` - Sleep optimization recommendations
+- `get_training_readiness` - Multi-factor readiness assessment
+
+## Customization
+
+### Modify the Analysis Prompt
+
+Edit the prompt in `demo_parallel_whoop.py` to focus on different aspects:
+
 ```python
-# Get recent sleep data
-await get_sleep_data()
-
-# Analyze workout performance  
-await get_workout_analysis(workout_id="12345")
-
-# Check training readiness
-await get_training_readiness()
+def create_prompt():
+    return """Analyze my WHOOP data focusing on:
+    1. Sleep optimization opportunities
+    2. Training load management
+    3. Recovery patterns
+    [Add your specific questions here]
+    """
 ```
 
-### Advanced Analytics
+### Add Custom MCP Tools
+
+Add new tools to `whoop_mcp.py`:
+
 ```python
-# Comprehensive health assessment
-recovery = await get_recovery_load_analysis()
-sleep = await get_sleep_quality_analysis() 
-readiness = await get_training_readiness()
+@mcp.tool()
+def get_custom_analysis() -> str:
+    """Your custom analysis tool"""
+    # Implementation here
+    return "Custom analysis result"
 ```
 
-### Custom Insights
-```python
-# Set custom prompt for personalized responses
-await set_custom_prompt("Always provide actionable health insights and include relevant medical disclaimers.")
-```
+## Deployment Options
 
-## 🚀 Live Deployment
+For production use, consider:
 
-Your WHOOP MCP server is deployed and accessible at:
+- **Cloud hosting**: Deploy the MCP server to platforms like Railway, Render, or AWS
+- **SSL certificates**: Use proper SSL instead of ngrok for production
+- **Authentication**: Add proper API key management for team use
+- **Rate limiting**: Implement appropriate rate limiting for your use case
 
-**🌐 Base URL:** `https://whoop-mcp.fly.dev`
+See the original [dpshade/WHOOP-mcp](https://github.com/dpshade/WHOOP-mcp) repository for full deployment guides and enterprise features.
 
-### Public Endpoints
-- **Health Check:** `https://whoop-mcp.fly.dev/health`
-- **Server Info:** `https://whoop-mcp.fly.dev/`
+## Related Documentation
 
-### Protected Endpoints (require API key)
-- **Available Tools:** `https://whoop-mcp.fly.dev/tools`
-- **Auth Status:** `https://whoop-mcp.fly.dev/auth`  
-- **HTTP MCP:** `https://whoop-mcp.fly.dev/mcp` (POST - Parallel API compatible)
-- **WebSocket MCP:** `wss://whoop-mcp.fly.dev/mcp`
+- [Parallel AI Documentation](https://docs.parallel.ai/)
+- [WHOOP Developer API](https://developer.whoop.com/docs)
+- [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
+- [Original WHOOP-MCP Project](https://github.com/dpshade/WHOOP-mcp)
 
-## 🤝 Contributing
+## Troubleshooting
 
-1. **Follow security guidelines** in [docs/SECURITY.md](docs/SECURITY.md)
-2. **Never commit sensitive data** (API keys, credentials)
-3. **Test your changes** with the provided test suites
-4. **Update documentation** for new features
+**"PARALLEL_API_KEY environment variable is required"**
+- Make sure you've set the environment variable: `export PARALLEL_API_KEY="your_key"`
 
-## 📄 License
+**"ngrok URL not working"**
+- Check your ngrok tunnel is active: `curl http://localhost:4040/api/tunnels`
+- Update the URL in your demo command
 
-This project is licensed under the MIT License.
+**"WHOOP authentication failed"**
+- Re-run the auth step: `curl "https://YOUR-NGROK-URL.ngrok-free.app/whoop/auth"`
+- Make sure you completed the OAuth flow in your browser
 
-## 🆘 Support
+**"No MCP tool calls appearing"**
+- Verify your ngrok URL is correct
+- Check the MCP server logs for incoming requests
+- Ensure WHOOP authentication is fresh (tokens expire)
 
-- **Documentation Issues:** Check the [docs/](docs/) folder
-- **Security Concerns:** Review [docs/SECURITY.md](docs/SECURITY.md)
-- **Deployment Problems:** See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-- **Connection Issues:** Try different [connection guides](docs/)
+## Contributing
 
----
+This is a demonstration project. For production features and bug fixes, contribute to the original [dpshade/WHOOP-mcp](https://github.com/dpshade/WHOOP-mcp) repository.
 
-**Made with ❤️ for the WHOOP community** | **Powered by Claude MCP** 🤖
+## License
+
+MIT License - See the original project for full license details.
