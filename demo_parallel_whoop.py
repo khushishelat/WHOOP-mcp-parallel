@@ -105,8 +105,8 @@ def create_prompt():
     return """I need you to conduct EXTENSIVE research across both my WHOOP data and the web to solve a specific fitness puzzle: 
 
 **MY PROFILE:**
-- Demographics: 23-year-old female, 5'2", Indian immigrant living in the US
-- Training routine: 3x/week strength training (full-body, lower focus) + 2x 5-mile runs/week + 1x yoga/week + HIIT circuits after lifts
+- Demographics: [Include your Demographics]
+- Training routine: [Summarize your excercise routine; WHOOP does not have strength training data available via MCP]
 - WHOOP data: includes HRV, RHR, strain, recovery, and sleep metrics
 
 **THE PUZZLE:**
@@ -114,8 +114,8 @@ I've been really curious about what it means to "train like an athlete." Specifi
 
 **RESEARCH REQUIREMENTS:**
 Search extensively across:
-- Published biometric norms (2020-2025) for female athletes in different categories (endurance, strength/power, team sport, recreationally trained)
-- Studies comparing trained vs untrained women by HRV, RHR, recovery, VO2, sleep
+- Published biometric norms (2020-2025) for athletes in different categories (endurance, strength/power, team sport, recreationally trained)
+- Studies comparing trained vs untrained people with my demographic by HRV, RHR, recovery, VO2, sleep
 - Research on training adaptations and interventions that shift these metrics
 - Evidence-based protocols athletes use to close gaps in HRV, RHR, or recovery (you may find this on Youtube, podcasts, interviews, scientific papers, etc.)
 - Demographic factors that might affect adaptation patterns
