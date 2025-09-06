@@ -449,7 +449,7 @@ def display_structured_output(task_result):
                             padding=(1, 1)
                         )
                         console.print(field_panel)
-                            console.print()
+                        console.print()
             
                 # Show clinical fields
                 if clinical_fields:
