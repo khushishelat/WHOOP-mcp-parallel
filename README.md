@@ -181,7 +181,3 @@ See the original [dpshade/WHOOP-mcp](https://github.com/dpshade/WHOOP-mcp) repos
 ## Contributing
 
 This is a demonstration project. For production features and bug fixes, contribute to the original [dpshade/WHOOP-mcp](https://github.com/dpshade/WHOOP-mcp) repository.
-
-## License
-
-MIT License - See the original project for full license details.
